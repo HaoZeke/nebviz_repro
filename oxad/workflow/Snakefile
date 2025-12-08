@@ -55,7 +55,7 @@ use rule * from get_petmad
 use rule * from run_eon
 
 
-use rule plot_neb_path from plotting
+use rule * from plotting
 
 
 rule minimize_endpoints:
@@ -68,5 +68,5 @@ rule minimize_endpoints:
 
 rule all:
     input:
-        rules.plot_neb_path.output,
+        rules.all_neb_plots.output,
     default_target: True
