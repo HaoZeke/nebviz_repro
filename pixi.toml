@@ -5,7 +5,30 @@ name = "nebviz"
 platforms = ["linux-64"]
 version = "0.1.0"
 
-[tasks]
+[tasks.dag]
+args = ["_cwd"]
+cmd = "cd {{ _cwd }} && snakemake -F --dag | dot -Tsvg > resources/dag.svg"
+
+[tasks.rulegraph]
+args = ["_cwd"]
+cmd = "cd {{ _cwd }} && snakemake -F --rulegraph | dot -Tsvg > resources/rulegraph.svg"
+
+[tasks.filegraph]
+args = ["_cwd"]
+cmd = "cd {{ _cwd }} && snakemake -F --filegraph | dot -Tsvg > resources/filegraph.svg"
+
+[tasks.graphs]
+args = ["_cwd"]
+depends-on = [
+  { task = "dag", args = ["{{ _cwd }}"] },
+  { task = "rulegraph", args = ["{{ _cwd }}"] },
+  { task = "filegraph", args = ["{{ _cwd }}"] },
+]
+
+[tasks.all-graphs]
+depends-on = [
+  { task = "graphs", args = ["oxad"] },
+]
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cpu"]
