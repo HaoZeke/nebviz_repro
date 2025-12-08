@@ -16,8 +16,8 @@ pet_mad:
 plotting:
   plot_structures: "crit_points"
   facecolor: "white"
-  title: "NEB Path Optimization"
-  aserot: "90x,0y,0z"
+  title: ""
+  aserot: "0x,0y,90z"
   draw_reactant:
     x: 30.0
     y: 60.0

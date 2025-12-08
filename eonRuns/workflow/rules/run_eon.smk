@@ -45,8 +45,6 @@ rule do_neb:
         opath=config["paths"]["neb"],
     shell:
         """
-        rm -f {params.opath}/neb_*.dat {params.opath}/neb_path_*.con
-
         cp {input.model} {params.opath}/
         cp {input.config} {params.opath}/config.ini
         cp {input.idpp_path} {params.opath}/
