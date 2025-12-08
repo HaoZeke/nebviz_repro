@@ -208,5 +208,6 @@ rule plot_neb_2d_rmsd:
             --title "{params.title}" \
             --cache-file {params._cache}/2dcache.parquet \
             --ase-rotation {params._aserot} \
-            --rbf-smoothing 0.1
+            --additional-con "/home/rgoswami/Git/Github/TheochemUI/nebviz/eonRuns/resources/ewNEB/configurations/system100-sp.xyz" \
+            --rbf-smoothing 0.009
         """
