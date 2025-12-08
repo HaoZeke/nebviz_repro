@@ -41,20 +41,12 @@ rule do_neb:
         results_dat=f"{config['paths']['neb']}/results.dat",
         neb_con=f"{config['paths']['neb']}/neb.con",
         neb_dat=f"{config['paths']['neb']}/neb.dat",
-        all_neb_dat=expand(
-            f"{config['paths']['neb']}/neb_{{num:03d}}.dat",
-            num=range(config["eon"]["num_steps"]),
-        ),
-        all_neb_con=expand(
-            f"{config['paths']['neb']}/neb_path_{{num:03d}}.con",
-            num=range(config["eon"]["num_steps"]),
-        ),
     params:
         opath=config["paths"]["neb"],
-    shadow:
-        "minimal"
     shell:
         """
+        rm -f {params.opath}/neb_*.dat {params.opath}/neb_path_*.con
+
         cp {input.model} {params.opath}/
         cp {input.config} {params.opath}/config.ini
         cp {input.idpp_path} {params.opath}/

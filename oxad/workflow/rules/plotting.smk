@@ -14,10 +14,6 @@ rule all_neb_plots:
 rule plot_neb_1d_path:
     input:
         con=f"{config['paths']['neb']}/neb.con",
-        dat_files=expand(
-            f"{config['paths']['neb']}/neb_{{num:03d}}.dat",
-            num=range(config["eon"]["num_steps"]),
-        ),
     output:
         plot=f"{config['paths']['plots']}/roneb_1D_path.png",
     params:
@@ -69,10 +65,6 @@ rule plot_neb_1d_path:
 rule plot_neb_1d_index:
     input:
         con=f"{config['paths']['neb']}/neb.con",
-        dat_files=expand(
-            f"{config['paths']['neb']}/neb_{{num:03d}}.dat",
-            num=range(config["eon"]["num_steps"]),
-        ),
     output:
         plot=f"{config['paths']['plots']}/roneb_1D_index.png",
     params:
@@ -121,10 +113,6 @@ rule plot_neb_1d_index:
 rule plot_neb_1d_rmsd:
     input:
         con=f"{config['paths']['neb']}/neb.con",
-        dat_files=expand(
-            f"{config['paths']['neb']}/neb_{{num:03d}}.dat",
-            num=range(config["eon"]["num_steps"]),
-        ),
     output:
         plot=f"{config['paths']['plots']}/roneb_1D_rmsd.png",
     params:
@@ -174,10 +162,6 @@ rule plot_neb_1d_rmsd:
 rule plot_neb_2d_rmsd:
     input:
         con=f"{config['paths']['neb']}/neb.con",
-        dat_files=expand(
-            f"{config['paths']['neb']}/neb_{{num:03d}}.dat",
-            num=range(config["eon"]["num_steps"]),
-        ),
     output:
         plot=f"{config['paths']['plots']}/roneb_2D_rmsd.png",
     params:
@@ -213,6 +197,7 @@ rule plot_neb_2d_rmsd:
             --plot-structures "{params.plot_structures}" \
             --facecolor "{params.facecolor}" \
             --input-dat-pattern "{params.ipath}/neb_*.dat" \
+            --input-path-pattern "{params.ipath}/neb_path*.con" \
             --figsize {params.figsize} \
             --dpi {params.dpi} \
             --zoom-ratio {params.zoom_ratio} \
