@@ -1,4 +1,6 @@
 ### Added
+**/ewNEB/**/*.xyz
+*.zip
 .snakemake
 *.nwo
 *.nwi
@@ -9,13 +11,7 @@
 *.pem
 _eonpot_engrad/
 **/compile_commands.json
-runs/manual/**/*.dat
-runs/manual/**/pos.con
-runs/manual/**/saddle.con
-runs/manual/**/displacement.con
-snake_runs/*
-!snake_runs/*.dvc
-subrepos/nwchem/
+**/eonRuns/**/results
 # Data files, handled by DVC
 *.traj
 *.h5

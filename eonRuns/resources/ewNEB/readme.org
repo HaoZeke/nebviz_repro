@@ -1,0 +1,7 @@
+* About
+The configurations here come from the supplementary information of [1].
+
+** References
+#+begin_quote
+[1] V. Ásgeirsson et al., “Nudged Elastic Band Method for Molecular Reactions Using Energy-Weighted Springs Combined with Eigenvector Following,” J. Chem. Theory Comput., vol. 17, no. 8, pp. 4929–4945, Aug. 2021, doi: 10.1021/acs.jctc.1c00462.
+#+end_quote

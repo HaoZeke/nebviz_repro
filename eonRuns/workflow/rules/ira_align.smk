@@ -8,8 +8,8 @@ import copy
 
 rule prepare_endpoints_pre:
     input:
-        reactant="resources/oxad/reactant.con",
-        product="resources/oxad/product.con",
+        reactant="resources/ewNEB/configurations/system100-react.xyz",
+        product="resources/ewNEB/configurations/system100-prod.xyz",
     output:
         reactant=f"{config['paths']['endpoints']}/reactant_pre_aligned.con",
         product=f"{config['paths']['endpoints']}/product_pre_aligned.con",
