@@ -208,5 +208,5 @@ rule plot_neb_2d_rmsd:
             --title "{params.title}" \
             --cache-file {params._cache}/2dcache.parquet \
             --ase-rotation {params._aserot} \
-            --rbf-smoothing 0.01
+            --rbf-smoothing 0.1
         """

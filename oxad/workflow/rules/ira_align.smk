@@ -8,8 +8,8 @@ import copy
 
 rule prepare_endpoints_pre:
     input:
-        reactant="resources/reactant.con",
-        product="resources/product.con",
+        reactant="resources/oxad/reactant.con",
+        product="resources/oxad/product.con",
     output:
         reactant=f"{config['paths']['endpoints']}/reactant_pre_aligned.con",
         product=f"{config['paths']['endpoints']}/product_pre_aligned.con",
@@ -20,7 +20,7 @@ rule prepare_endpoints_pre:
             product_atm = ase.io.read(input.product)
         except FileNotFoundError as e:
             raise Exception(
-                f"Error: {e}. Make sure reactant.con and product.con are present."
+                f"Error: {e}. Make sure the endpoint configurations are present."
             )
 
             # Center them
