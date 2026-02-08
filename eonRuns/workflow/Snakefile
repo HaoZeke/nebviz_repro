@@ -15,13 +15,6 @@ module ira_align:
         config
 
 
-module ase_idpp:
-    snakefile:
-        "rules/ase_idpp.smk"
-    config:
-        config
-
-
 module get_petmad:
     snakefile:
         "rules/get_petmad.smk"
@@ -45,8 +38,6 @@ module plotting:
 
 use rule * from ira_align as __ira_align_*
 
-
-use rule * from ase_idpp as __ase_idpp_*
 
 
 use rule * from get_petmad
