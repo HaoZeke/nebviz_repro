@@ -3,7 +3,7 @@
 
 rule do_minimization:
     input:
-        config="resources/config_minim.ini",
+        config=lambda wildcards: f"resources/{config['compute_target']}/config_minim.ini",
         endpoint=f"{config['paths']['endpoints']}/{{endpoint}}_pre_aligned.con",
         model=expand(
             f"{config['paths']['models']}/pet-mad-{{version}}.pt",
@@ -25,7 +25,7 @@ rule do_minimization:
 
 rule do_neb:
     input:
-        config="resources/config_neb.ini",
+        config=lambda wildcards: f"resources/{config['compute_target']}/config_neb.ini",
         idpp_path=f"{config['paths']['idpp']}/idppPath.dat",
         reactant=f"{config['paths']['endpoints']}/reactant.con",
         product=f"{config['paths']['endpoints']}/product.con",
