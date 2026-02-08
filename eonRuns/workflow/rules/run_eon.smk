@@ -17,7 +17,7 @@ rule do_minimization:
         """
         cp {input.config} config.ini
         cp {input.endpoint} pos.con
-        cp {input.model} .
+        cp -f {input.model} .
         eonclient
         cp min.con {output.endpoint}
         """
@@ -40,7 +40,8 @@ rule do_neb:
         opath=f"{config['paths']['neb']}/{{system}}/",
     shell:
         """
-        cp {input.model} {params.opath}/
+        mkdir -p {params.opath}
+        cp -f {input.model} {params.opath}/
         cp {input.config} {params.opath}/config.ini
         cp {input.reactant} {params.opath}/reactant.con
         cp {input.product} {params.opath}/product.con
