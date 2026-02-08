@@ -8,6 +8,24 @@ min_version("6.0")
 configfile: "config/general_config.yml"
 
 
+def get_all_targets(wildcards):
+    targets = []
+    # Safely access the keys, assuming config is loaded
+    if "systems" in config:
+        for sys in config["systems"]:
+            targets.extend(
+                [
+                    f"{config['paths']['neb']}/{sys}/results.dat",
+                ]
+            )
+    return targets
+
+rule all:
+    input:
+        get_all_targets,
+    default_target: True
+
+
 module ira_align:
     snakefile:
         "rules/ira_align.smk"
@@ -45,9 +63,3 @@ rule minimize_endpoints:
             f"{config['paths']['endpoints']}/{{endpoint}}_minimized.con",
             endpoint=["reactant", "product"],
         ),
-
-
-rule all:
-    input:
-        rules.do_neb.output,
-    default_target: True

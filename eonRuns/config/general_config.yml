@@ -1,13 +1,20 @@
 compute_target: cpu
 common:
   number_of_intermediate_imgs: 10
-  reactant_file: "resources/reactant.con"
-  product_file: "resources/product.con"
+systems:
+  # ethylene + n2o
+  system_100:
+    reactant: resources/ewNEB/configurations/system100-react.xyz
+    product: resources/ewNEB/configurations/system100-prod.xyz
+    saddle: resources/ewNEB/configurations/system100-sp.xyz
+  08_alanine:
+    reactant: resources/icFSM/sharada/08_alanine/initial/ipath_000.con
+    product: resources/icFSM/sharada/08_alanine/initial/ipath_001.con
+    saddle: resources/icFSM/sharada/08_alanine/ts.xyz
 paths:
   models: "results/00_models"
   endpoints: "results/01_endpoints"
-  idpp: "results/02_idpp"
-  neb: "results/03_neb"
+  neb: "results/02_neb"
   cache: "results/_cache"
 eon:
   config: "resources/config.ini"

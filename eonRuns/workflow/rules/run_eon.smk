@@ -4,13 +4,13 @@
 rule do_minimization:
     input:
         config=lambda wildcards: f"resources/{config['compute_target']}/config_minim.ini",
-        endpoint=f"{config['paths']['endpoints']}/{{endpoint}}_pre_aligned.con",
+        endpoint=f"{config['paths']['endpoints']}/{{system}}/{{endpoint}}_pre_aligned.con",
         model=expand(
             f"{config['paths']['models']}/pet-mad-{{version}}.pt",
             version=config["pet_mad"]["version"],
         ),
     output:
-        endpoint=f"{config['paths']['endpoints']}/{{endpoint}}_minimized.con",
+        endpoint=f"{config['paths']['endpoints']}/{{system}}/{{endpoint}}_minimized.con",
     shadow:
         "minimal"
     shell:
@@ -26,18 +26,18 @@ rule do_minimization:
 rule do_neb:
     input:
         config=lambda wildcards: f"resources/{config['compute_target']}/config_neb.ini",
-        reactant=f"{config['paths']['endpoints']}/reactant.con",
-        product=f"{config['paths']['endpoints']}/product.con",
+        reactant=f"{config['paths']['endpoints']}/{{system}}/reactant.con",
+        product=f"{config['paths']['endpoints']}/{{system}}/product.con",
         model=expand(
             f"{config['paths']['models']}/pet-mad-{{version}}.pt",
             version=config["pet_mad"]["version"],
         ),
     output:
-        results_dat=f"{config['paths']['neb']}/results.dat",
-        neb_con=f"{config['paths']['neb']}/neb.con",
-        neb_dat=f"{config['paths']['neb']}/neb.dat",
+        results_dat=f"{config['paths']['neb']}/{{system}}/results.dat",
+        neb_con=f"{config['paths']['neb']}/{{system}}/neb.con",
+        neb_dat=f"{config['paths']['neb']}/{{system}}/neb.dat",
     params:
-        opath=config["paths"]["neb"],
+        opath=f"{config['paths']['neb']}/{{system}}/",
     shell:
         """
         cp {input.model} {params.opath}/
