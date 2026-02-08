@@ -19,4 +19,4 @@ paths:
 eon:
   config: "resources/config.ini"
 upet:
-  model: "pet-omad-l-v0.1.0"
+  model: "pet-omat-l-v1.0.0"
