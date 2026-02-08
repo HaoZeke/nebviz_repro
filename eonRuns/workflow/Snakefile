@@ -26,9 +26,9 @@ rule all:
     default_target: True
 
 
-module ira_align:
+module convert_center:
     snakefile:
-        "rules/ira_align.smk"
+        "rules/convert_center.smk"
     config:
         config
 
@@ -47,7 +47,7 @@ module run_eon:
         config
 
 
-use rule * from ira_align as __ira_align_*
+use rule * from convert_center as __convert_center_*
 
 
 
