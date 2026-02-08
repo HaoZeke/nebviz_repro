@@ -29,13 +29,6 @@ module run_eon:
         config
 
 
-module plotting:
-    snakefile:
-        "rules/plotting.smk"
-    config:
-        config
-
-
 use rule * from ira_align as __ira_align_*
 
 
@@ -44,9 +37,6 @@ use rule * from get_petmad
 
 
 use rule * from run_eon
-
-
-use rule * from plotting
 
 
 rule minimize_endpoints:
@@ -59,5 +49,5 @@ rule minimize_endpoints:
 
 rule all:
     input:
-        rules.all_neb_plots.output,
+        rules.do_neb.output,
     default_target: True

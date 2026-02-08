@@ -8,32 +8,8 @@ paths:
   endpoints: "results/01_endpoints"
   idpp: "results/02_idpp"
   neb: "results/03_neb"
-  plots: "results/04_plots"
   cache: "results/_cache"
 eon:
   config: "resources/config.ini"
 pet_mad:
   version: "v1.1.0"
-plotting:
-  plot_structures: "crit_points"
-  facecolor: "white"
-  title: ""
-  aserot: "0x,0y,90z"
-  draw_reactant:
-    x: 30.0
-    y: 60.0
-    rad: 0.1
-  draw_product:
-    x: -1.0
-    y: 40.0
-    rad: 0.1
-  draw_saddle:
-    x: 25.0
-    y: 40.0
-    rad: 0.1
-  figure:
-    figsize: [5.37, 3.37]
-    dpi: 300
-    zoom_ratio: 0.25
-  fonts:
-    base: 12
