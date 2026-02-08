@@ -1,16 +1,17 @@
-compute_target: cpu
+compute_target: cuda
 common:
   number_of_intermediate_imgs: 10
 systems:
   # ethylene + n2o
+  # birkholz -> 01_c2no2
   system_100:
     reactant: resources/ewNEB/configurations/system100-react.xyz
     product: resources/ewNEB/configurations/system100-prod.xyz
     saddle: resources/ewNEB/configurations/system100-sp.xyz
-  08_alanine:
-    reactant: resources/icFSM/sharada/08_alanine/initial/ipath_000.con
-    product: resources/icFSM/sharada/08_alanine/initial/ipath_001.con
-    saddle: resources/icFSM/sharada/08_alanine/ts.xyz
+  11_grignard:
+    reactant: resources/icFSM/birkholz/11_grignard/initial/ipath_000.con
+    product: resources/icFSM/birkholz/11_grignard/initial/ipath_001.con
+    saddle: resources/icFSM/birkholz/11_grignard/ts.xyz
 paths:
   models: "results/00_models"
   endpoints: "results/01_endpoints"

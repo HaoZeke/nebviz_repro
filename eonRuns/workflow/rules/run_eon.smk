@@ -28,7 +28,7 @@ rule do_minimization:
                 "max_iterations": 2000,
                 "opt_method": "lbfgs",
                 "max_move": 0.1,
-                "converged_force": 0.01,
+                "converged_force": 0.1,
             },
         }
         import shutil, subprocess
@@ -80,7 +80,7 @@ rule do_neb:
                 "max_iterations": 1000,
                 "opt_method": "lbfgs",
                 "max_move": 0.01,
-                "converged_force": 0.05,
+                "converged_force": 0.2,
             },
             "Debug": {"write_movies": "true"},
         }
