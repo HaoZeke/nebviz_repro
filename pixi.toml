@@ -30,33 +30,45 @@ depends-on = [
   { task = "graphs", args = ["oxad"] },
 ]
 
-[pypi-options]
-extra-index-urls = ["https://download.pytorch.org/whl/cpu"]
-
 [dependencies]
 ira = ">=2.2.0,<3"
-eon = ">=2.9.0,<3"
-libtorch = ">=2.9.1,<3"
 snakemake = ">=9.16.3,<10"
 
 [pypi-dependencies]
 rgpycrumbs = ">=0.1.2, <0.2"
 ase = ">=3.27.0, <4"
 requests = "*"
+
+[feature.cpu.pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/cpu"]
+
+[feature.cpu.dependencies]
+libtorch = ">=2.9.1,<3"
+eon = ">=2.9.0,<3"
+
+[feature.cpu.pypi-dependencies]
 metatrain = ">=2026.1, <2027"
 
 [feature.cuda.pypi-options]
-extra-index-urls = []
+extra-index-urls = ["https://download.pytorch.org/whl/cu124"]
+
+[feature.cuda.pypi-dependencies]
+metatrain = ">=2026.1, <2027"
 
 [feature.cuda.dependencies]
-cuda-toolkit = ">=13.1.1,<14"
-cuda-compiler = ">=13.1.1,<14"
-cuda-libraries-dev = ">=13.1.1,<14"
-cuda-version = ">=13.1,<14"
-cuda-nvcc = ">=13.1.115,<14"
-cuda-cudart-dev = ">=13.1.80,<14"
-cuda-driver-dev = ">=13.1.80,<14"
-pytorch = ">=2.9.1,<3"
+libtorch = { version = ">=2.9.1,<3", build = "*cuda*" }
+libmetatomic-torch = { version = ">=0.1.7,<0.2" }
+libmetatensor-torch = { version = ">=0.8,<0.9" }
+cuda-toolkit = ">=12.4,<13"
+cuda-compiler = ">=12.4,<13"
+cuda-libraries-dev = ">=12.4,<13"
+cuda-version = ">=12.4,<13"
+cuda-nvcc = ">=12.4,<13"
+cuda-cudart-dev = ">=12.4,<13"
+cuda-driver-dev = ">=12.4,<13"
+# important, 2.9.0 builds against both _cpu and _cuda from _1 onwards
+eon = { version = ">=2.9.0,<3", build = "*_1" }
 
 [environments]
 cuda = {features = ["cuda"]}
+cpu = {features = ["cpu"]}
