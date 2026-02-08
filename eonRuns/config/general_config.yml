@@ -1,3 +1,4 @@
+compute_target: cpu
 common:
   number_of_intermediate_imgs: 10
   reactant_file: "resources/reactant.con"
