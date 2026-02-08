@@ -6,8 +6,8 @@ rule do_minimization:
         config=lambda wildcards: f"resources/{config['compute_target']}/config_minim.ini",
         endpoint=f"{config['paths']['endpoints']}/{{system}}/{{endpoint}}_pre_aligned.con",
         model=expand(
-            f"{config['paths']['models']}/pet-mad-{{version}}.pt",
-            version=config["pet_mad"]["version"],
+            f"{config['paths']['models']}/{{model}}.pt",
+            model=config["upet"]["model"],
         ),
     output:
         endpoint=f"{config['paths']['endpoints']}/{{system}}/{{endpoint}}_minimized.con",
@@ -29,8 +29,8 @@ rule do_neb:
         reactant=f"{config['paths']['endpoints']}/{{system}}/reactant.con",
         product=f"{config['paths']['endpoints']}/{{system}}/product.con",
         model=expand(
-            f"{config['paths']['models']}/pet-mad-{{version}}.pt",
-            version=config["pet_mad"]["version"],
+            f"{config['paths']['models']}/{{model}}.pt",
+            model=config["upet"]["model"],
         ),
     output:
         results_dat=f"{config['paths']['neb']}/{{system}}/results.dat",

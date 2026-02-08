@@ -33,9 +33,9 @@ module ira_align:
         config
 
 
-module get_petmad:
+module get_upet:
     snakefile:
-        "rules/get_petmad.smk"
+        "rules/get_upet.smk"
     config:
         config
 
@@ -51,7 +51,7 @@ use rule * from ira_align as __ira_align_*
 
 
 
-use rule * from get_petmad
+use rule * from get_upet
 
 
 use rule * from run_eon

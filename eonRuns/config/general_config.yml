@@ -18,5 +18,5 @@ paths:
   cache: "results/_cache"
 eon:
   config: "resources/config.ini"
-pet_mad:
-  version: "v1.1.0"
+upet:
+  model: "pet-omad-l-v0.1.0"
