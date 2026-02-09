@@ -41,19 +41,21 @@ requests = "*"
 
 [feature.cpu.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cpu"]
+index-strategy = "unsafe-best-match"
 
 [feature.cpu.dependencies]
 libtorch = ">=2.9.1,<3"
 eon = ">=2.9.0,<3"
 
 [feature.cpu.pypi-dependencies]
-metatrain = ">=2026.1, <2027"
+metatrain = { git = "https://github.com/metatensor/metatrain", rev = "492f0bfaeb3ea72fda4252b0dd6c055363cf199a" }
 
 [feature.cuda.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu124"]
+index-strategy = "unsafe-best-match"
 
 [feature.cuda.pypi-dependencies]
-metatrain = ">=2026.1, <2027"
+metatrain = { git = "https://github.com/metatensor/metatrain", rev = "492f0bfaeb3ea72fda4252b0dd6c055363cf199a" }
 
 [feature.cuda.dependencies]
 libtorch = { version = ">=2.9.1,<3", build = "*cuda*" }

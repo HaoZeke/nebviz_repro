@@ -1,55 +1,100 @@
 # -*- mode:snakemake; -*-
+from rgpycrumbs.eon.helpers import write_eon_config
+from pathlib import Path
 
 
 rule do_minimization:
     input:
-        config=lambda wildcards: f"resources/{config['compute_target']}/config_minim.ini",
-        endpoint=f"{config['paths']['endpoints']}/{{endpoint}}_pre_aligned.con",
+        endpoint=f"{config['paths']['endpoints']}/{{system}}/{{endpoint}}_pre_aligned.con",
         model=expand(
-            f"{config['paths']['models']}/pet-mad-{{version}}.pt",
-            version=config["pet_mad"]["version"],
+            f"{config['paths']['models']}/{{model}}.pt",
+            model=config["upet"]["model"],
         ),
     output:
-        endpoint=f"{config['paths']['endpoints']}/{{endpoint}}_minimized.con",
+        endpoint=f"{config['paths']['endpoints']}/{{system}}/{{endpoint}}_minimized.con",
+    params:
+        device=config["compute_target"],
     shadow:
         "minimal"
-    shell:
-        """
-        cp {input.config} config.ini
-        cp {input.endpoint} pos.con
-        cp {input.model} .
-        eonclient
-        cp min.con {output.endpoint}
-        """
+    run:
+        min_settings = {
+            "Main": {"job": "minimization", "random_seed": 706253457},
+            "Potential": {"potential": "metatomic"},
+            "Metatomic": {
+                "model_path": Path(input.model[0]).absolute(),
+                "device": params.device,
+            },
+            "Optimizer": {
+                "max_iterations": 2000,
+                "opt_method": "lbfgs",
+                "max_move": 0.1,
+                "converged_force": 0.0514221,
+            },
+        }
+        import shutil, subprocess
+
+        write_eon_config(Path("."), min_settings)
+        shutil.copy(input.endpoint, "pos.con")
+        subprocess.run(["eonclient"], check=True)
+        shutil.copy("min.con", output.endpoint)
 
 
 rule do_neb:
     input:
-        config=lambda wildcards: f"resources/{config['compute_target']}/config_neb.ini",
-        idpp_path=f"{config['paths']['idpp']}/idppPath.dat",
-        reactant=f"{config['paths']['endpoints']}/reactant.con",
-        product=f"{config['paths']['endpoints']}/product.con",
-        path_images=expand(
-            f"{config['paths']['idpp']}/path/{{num:02d}}.con",
-            num=range(config["common"]["number_of_intermediate_imgs"] + 2),
-        ),
+        reactant=f"{config['paths']['endpoints']}/{{system}}/reactant.con",
+        product=f"{config['paths']['endpoints']}/{{system}}/product.con",
         model=expand(
-            f"{config['paths']['models']}/pet-mad-{{version}}.pt",
-            version=config["pet_mad"]["version"],
+            f"{config['paths']['models']}/{{model}}.pt",
+            model=config["upet"]["model"],
         ),
     output:
-        results_dat=f"{config['paths']['neb']}/results.dat",
-        neb_con=f"{config['paths']['neb']}/neb.con",
-        neb_dat=f"{config['paths']['neb']}/neb.dat",
+        results_dat=f"{config['paths']['neb']}/{{system}}/results.dat",
+        neb_con=f"{config['paths']['neb']}/{{system}}/neb.con",
+        neb_dat=f"{config['paths']['neb']}/{{system}}/neb.dat",
     params:
-        opath=config["paths"]["neb"],
-    shell:
-        """
-        cp {input.model} {params.opath}/
-        cp {input.config} {params.opath}/config.ini
-        cp {input.idpp_path} {params.opath}/
-        cp {input.reactant} {params.opath}/reactant.con
-        cp {input.product} {params.opath}/product.con
-        cd {params.opath}
-        eonclient 2>&1 || true
-        """
+        device=config["compute_target"],
+        opath=f"{config['paths']['neb']}/{{system}}",
+    run:
+        neb_settings = {
+            "Main": {"job": "nudged_elastic_band", "random_seed": 706253457},
+            "Potential": {"potential": "metatomic"},
+            "Metatomic": {
+                "model_path": Path(input.model[0]).absolute(),
+                "device": params.device,
+            },
+            "Nudged Elastic Band": {
+                "images": 18,
+                "energy_weighted": "true",
+                "ew_ksp_min": 0.972,
+                "ew_ksp_max": 9.72,
+                "ew_trigger": 0.5,
+                "initializer": "sidpp",
+                "sidpp_growth_alpha": 0.33,
+                "minimize_endpoints": "false",
+                "climbing_image_method": "true",
+                "climbing_image_converged_only": "true",
+                "ci_after": 0.5,
+                "ci_after_rel": 0.8,
+            },
+            "Optimizer": {
+                "max_iterations": 1000,
+                "opt_method": "lbfgs",
+                "max_move": 0.1,
+                # marks and gomez use 10^-3 Ha / Bohr
+                # 0.0514221
+                "converged_force": 0.0514221,
+            },
+            "Debug": {"write_movies": "true"},
+        }
+
+        out_path = Path(params.opath)
+        out_path.mkdir(parents=True, exist_ok=True)
+
+        write_eon_config(out_path, neb_settings)
+
+        import shutil, subprocess
+
+        shutil.copy2(os.path.abspath(input.reactant), out_path / "reactant.con")
+        shutil.copy2(os.path.abspath(input.product), out_path / "product.con")
+
+        subprocess.run(["eonclient"], cwd=out_path, check=True)

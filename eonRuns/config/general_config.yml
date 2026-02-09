@@ -1,39 +1,27 @@
-compute_target: cpu
+compute_target: cuda
 common:
   number_of_intermediate_imgs: 10
-  reactant_file: "resources/reactant.con"
-  product_file: "resources/product.con"
+systems:
+  # ethylene + n2o
+  # birkholz -> 01_c2no2
+  system_100:
+    reactant: resources/ewNEB/configurations/system100-react.xyz
+    product: resources/ewNEB/configurations/system100-prod.xyz
+    saddle: resources/ewNEB/configurations/system100-sp.xyz
+  11_grignard:
+    reactant: resources/icFSM/birkholz/11_grignard/initial/ipath_000.con
+    product: resources/icFSM/birkholz/11_grignard/initial/ipath_001.con
+    saddle: resources/icFSM/birkholz/11_grignard/ts.xyz
+  bicyclobutane_05:
+    reactant: resources/mlFSM/05_bicyclobutane/initial/ipath_000.con
+    product: resources/mlFSM/05_bicyclobutane/initial/ipath_001.con
+    saddle: resources/mlFSM/05_bicyclobutane/ts.xyz
 paths:
   models: "results/00_models"
   endpoints: "results/01_endpoints"
-  idpp: "results/02_idpp"
-  neb: "results/03_neb"
-  plots: "results/04_plots"
+  neb: "results/02_neb"
   cache: "results/_cache"
 eon:
   config: "resources/config.ini"
-pet_mad:
-  version: "v1.1.0"
-plotting:
-  plot_structures: "crit_points"
-  facecolor: "white"
-  title: ""
-  aserot: "0x,0y,90z"
-  draw_reactant:
-    x: 30.0
-    y: 60.0
-    rad: 0.1
-  draw_product:
-    x: -1.0
-    y: 40.0
-    rad: 0.1
-  draw_saddle:
-    x: 25.0
-    y: 40.0
-    rad: 0.1
-  figure:
-    figsize: [5.37, 3.37]
-    dpi: 300
-    zoom_ratio: 0.25
-  fonts:
-    base: 12
+upet:
+  model: "pet-omat-l-v1.0.0"

@@ -8,23 +8,34 @@ min_version("6.0")
 configfile: "config/general_config.yml"
 
 
-module ira_align:
+def get_all_targets(wildcards):
+    targets = []
+    # Safely access the keys, assuming config is loaded
+    if "systems" in config:
+        for sys in config["systems"]:
+            targets.extend(
+                [
+                    f"{config['paths']['neb']}/{sys}/results.dat",
+                ]
+            )
+    return targets
+
+rule all:
+    input:
+        get_all_targets,
+    default_target: True
+
+
+module convert_center:
     snakefile:
-        "rules/ira_align.smk"
+        "rules/convert_center.smk"
     config:
         config
 
 
-module ase_idpp:
+module get_upet:
     snakefile:
-        "rules/ase_idpp.smk"
-    config:
-        config
-
-
-module get_petmad:
-    snakefile:
-        "rules/get_petmad.smk"
+        "rules/get_upet.smk"
     config:
         config
 
@@ -36,26 +47,14 @@ module run_eon:
         config
 
 
-module plotting:
-    snakefile:
-        "rules/plotting.smk"
-    config:
-        config
+use rule * from convert_center as __convert_center_*
 
 
-use rule * from ira_align as __ira_align_*
 
-
-use rule * from ase_idpp as __ase_idpp_*
-
-
-use rule * from get_petmad
+use rule * from get_upet
 
 
 use rule * from run_eon
-
-
-use rule * from plotting
 
 
 rule minimize_endpoints:
@@ -64,9 +63,3 @@ rule minimize_endpoints:
             f"{config['paths']['endpoints']}/{{endpoint}}_minimized.con",
             endpoint=["reactant", "product"],
         ),
-
-
-rule all:
-    input:
-        rules.all_neb_plots.output,
-    default_target: True
