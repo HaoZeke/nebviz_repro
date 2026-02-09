@@ -12,6 +12,10 @@ systems:
     reactant: resources/icFSM/birkholz/11_grignard/initial/ipath_000.con
     product: resources/icFSM/birkholz/11_grignard/initial/ipath_001.con
     saddle: resources/icFSM/birkholz/11_grignard/ts.xyz
+  bicyclobutane_05:
+    reactant: resources/mlFSM/05_bicyclobutane/initial/ipath_000.con
+    product: resources/mlFSM/05_bicyclobutane/initial/ipath_001.con
+    saddle: resources/mlFSM/05_bicyclobutane/ts.xyz
 paths:
   models: "results/00_models"
   endpoints: "results/01_endpoints"

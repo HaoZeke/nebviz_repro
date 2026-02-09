@@ -28,7 +28,7 @@ rule do_minimization:
                 "max_iterations": 2000,
                 "opt_method": "lbfgs",
                 "max_move": 0.1,
-                "converged_force": 0.1,
+                "converged_force": 0.0514221,
             },
         }
         import shutil, subprocess
@@ -79,8 +79,10 @@ rule do_neb:
             "Optimizer": {
                 "max_iterations": 1000,
                 "opt_method": "lbfgs",
-                "max_move": 0.01,
-                "converged_force": 0.2,
+                "max_move": 0.1,
+                # marks and gomez use 10^-3 Ha / Bohr
+                # 0.0514221
+                "converged_force": 0.0514221,
             },
             "Debug": {"write_movies": "true"},
         }
