@@ -26,11 +26,16 @@ pixi s
 snakemake -c4 # or c1
 # View results/plots/04_plots/cineb.png
 #+end_src
-For faster experimental visualization is required (compared to editing the ~config/general_config.yaml~) then use ~results~ directly:
+For faster experimental visualization (compared to editing ~config/general_config.yaml~) use ~results~ directly:
 #+begin_src bash
-cd results/03_neb
-python -m rgpycrumbs.cli eon plt_neb --con-file neb.con --plot-structures "crit_points" --facecolor "floralwhite"
+cd results/02_neb/system_100
+python -m rgpycrumbs.cli --dev eon plt-neb \
+    --con-file neb.con --plot-type landscape --project-path \
+    --show-pts --landscape-path all \
+    --plot-structures crit_points --surface-type grad_imq \
+    --ira-kmax 14 --show-legend
 #+end_src
+To generate all paper figures at once, run ~bash scripts/all_2d.sh~ from the repository root.
 
 ** References
 #+begin_quote
