@@ -4,7 +4,7 @@ This Snakemake workflow runs the NEB systems and regenerates the blog figures.
 The automated steps are:
 - export PET-MAD
 - prepare and minimize endpoints
-- run energy-weighted CI-NEB in eOn
+- run energy-weighted OCI-NEB in eOn
 - write readcon v2 =.con= trajectories
 - generate 1D profiles, 2D RMSD landscapes, and diagnostic plots
 

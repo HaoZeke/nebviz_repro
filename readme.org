@@ -6,7 +6,7 @@ The workflow covers:
 - PET-MAD model export
 - endpoint preparation
 - eOn endpoint minimization
-- eOn energy-weighted CI-NEB runs
+- eOn energy-weighted OCI-NEB runs
 - readcon v2 checks for generated =.con= trajectories
 - rgpycrumbs and chemparseplot figures
 - convergence, force, and image-spacing diagnostics
