@@ -7,6 +7,8 @@ import argparse
 import importlib
 import importlib.metadata
 import json
+import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -20,8 +22,30 @@ def main() -> None:
 
     versions = {}
     for package in PACKAGES:
-        importlib.import_module(package)
-        versions[package] = importlib.metadata.version(package)
+        package_info = {}
+        try:
+            importlib.import_module(package)
+            package_info["import"] = "ok"
+        except ImportError as exc:
+            package_info["import"] = f"failed: {exc}"
+        try:
+            package_info["version"] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            package_info["version"] = "metadata unavailable"
+        versions[package] = package_info
+
+    eonclient = shutil.which("eonclient")
+    versions["eonclient"] = {"path": eonclient or "not found"}
+    if eonclient:
+        proc = subprocess.run(
+            [eonclient, "--version"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        versions["eonclient"]["version_output"] = (
+            proc.stdout.strip() or proc.stderr.strip() or f"exit {proc.returncode}"
+        )
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
