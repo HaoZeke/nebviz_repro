@@ -77,7 +77,7 @@ rule do_neb:
                 "ci_after_rel": 0.8,
                 "ci_mmf": "true",
                 "ci_mmf_after": 0.1,
-                "ci_mmf_after_rel": 0.8,
+                "ci_mmf_after_rel": 0.5,
                 "ci_mmf_penalty_strength": 1.5,
                 "ci_mmf_penalty_base": 0.4,
                 "ci_mmf_angle": 0.9,
