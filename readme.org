@@ -52,6 +52,10 @@ The figure workflow also writes:
 | Grignard      | ~11_grignard~      | Birkholz et al.  |
 | Bicyclobutane | ~bicyclobutane_05~ | mlFSM            |
 
+System-specific optimizer tolerances live in =eonRuns/config/general_config.yml=.
+The Grignard example is kept as a path-shape diagnostic, and the blog diagnostics
+show the force history rather than treating the path as rate-quality data.
+
 * Figures
 The Snakemake target =all_figures= produces:
 - =neb-viz-pipeline.png=

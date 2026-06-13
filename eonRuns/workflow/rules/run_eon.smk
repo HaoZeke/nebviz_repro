@@ -55,6 +55,8 @@ rule do_neb:
         device=config["compute_target"],
         opath=f"{config['paths']['neb']}/{{system}}",
     run:
+        system_config = config["systems"].get(wildcards.system, {})
+        optimizer_config = system_config.get("optimizer", {})
         neb_settings = {
             "Main": {"job": "nudged_elastic_band", "random_seed": 706253457},
             "Potential": {"potential": "metatomic"},
@@ -91,12 +93,12 @@ rule do_neb:
                 "converged_angle": 10.0,
             },
             "Optimizer": {
-                "max_iterations": 1000,
+                "max_iterations": optimizer_config.get("max_iterations", 1000),
                 "opt_method": "lbfgs",
                 "max_move": 0.1,
                 # marks and gomez use 10^-3 Ha / Bohr
                 # 0.0514221
-                "converged_force": 0.0514221,
+                "converged_force": optimizer_config.get("converged_force", 0.0514221),
             },
             "Debug": {"write_movies": "true"},
         }
