@@ -10,7 +10,6 @@ configfile: "config/general_config.yml"
 
 def get_all_targets(wildcards):
     targets = []
-    # Safely access the keys, assuming config is loaded
     if "systems" in config:
         for sys in config["systems"]:
             targets.extend(
@@ -18,12 +17,37 @@ def get_all_targets(wildcards):
                     f"{config['paths']['neb']}/{sys}/results.dat",
                 ]
             )
+    targets.extend(get_figure_targets(wildcards))
     return targets
+
+
+def get_figure_targets(wildcards):
+    prefix = config["plotting"]["blog_prefix"]
+    fig_dir = f"{config['paths']['figures']}/blog"
+    return [
+        f"{fig_dir}/{prefix}-pipeline.png",
+        f"{fig_dir}/{prefix}-1d-path.png",
+        f"{fig_dir}/{prefix}-1d-index.png",
+        f"{fig_dir}/{prefix}-1d-rmsd.png",
+        f"{fig_dir}/{prefix}-2d-cyclo.png",
+        f"{fig_dir}/{prefix}-2d-grignard.png",
+        f"{fig_dir}/{prefix}-2d-bicyclo.png",
+        f"{fig_dir}/{prefix}-convergence.png",
+        f"{fig_dir}/{prefix}-force-heatmap.png",
+        f"{fig_dir}/{prefix}-sampling-density.png",
+        f"{fig_dir}/readcon-v2-summary.csv",
+        f"{fig_dir}/stack.json",
+    ]
 
 rule all:
     input:
         get_all_targets,
     default_target: True
+
+
+rule all_figures:
+    input:
+        get_figure_targets,
 
 
 module convert_center:
@@ -47,6 +71,13 @@ module run_eon:
         config
 
 
+module plotting:
+    snakefile:
+        "rules/plotting.smk"
+    config:
+        config
+
+
 use rule * from convert_center as __convert_center_*
 
 
@@ -55,6 +86,9 @@ use rule * from get_upet
 
 
 use rule * from run_eon
+
+
+use rule * from plotting
 
 
 rule minimize_endpoints:

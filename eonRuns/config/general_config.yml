@@ -1,4 +1,4 @@
-compute_target: cuda
+compute_target: cpu
 common:
   number_of_intermediate_imgs: 10
 systems:
@@ -20,7 +20,22 @@ paths:
   models: "results/00_models"
   endpoints: "results/01_endpoints"
   neb: "results/02_neb"
+  figures: "results/03_figures"
   cache: "results/_cache"
+plotting:
+  blog_system: system_100
+  blog_prefix: neb-viz
+  surface_type_small: grad_imq
+  surface_type_large: grad_imq_ny
+  ira_kmax: 14
+  dpi: 300
+  figsize_profile: "5.37 3.37"
+  figsize_landscape: "5.37 5.37"
+  fontsize_base: 12
+  zoom_ratio: 0.25
+  facecolor: white
+  rotation: "0x,0y,0z"
+  plot_structures: crit_points
 eon:
   config: "resources/config.ini"
 upet:

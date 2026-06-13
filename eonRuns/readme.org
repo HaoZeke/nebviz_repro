@@ -1,63 +1,87 @@
 * About
-This uses N2O and ethylene to form oxadiazole as an example. Basically the steps automated:
-- Get PET-MAD
-- Relax endpoints (EON+IRA)
-- Generate IDPP path (ASE)
-- Run ewCI-NEB in EON
-- Plot
-Conceptually similar to the reproduction done for [1, 2, 5, 6] on Github ([[https://github.com/TheochemUI/gpr_sella_repro][1]], [[https://github.com/HaoZeke/brms_idrot_repro][2]], [[https://github.com/theochemUI/otgpd_repro][5]], [[https://github.com/metatensor/ecosystem-article/tree/main/eon][6]]). We
-use ~snakemake~ for this section[fn:: Some of these are inspired by the
-workflows of [[https://github.com/amritagos][amritagos]]].
+This Snakemake workflow runs the NEB systems and regenerates the blog figures.
+
+The automated steps are:
+- export PET-MAD
+- prepare and minimize endpoints
+- run energy-weighted CI-NEB in eOn
+- write readcon v2 =.con= trajectories
+- generate 1D profiles, 2D RMSD landscapes, and diagnostic plots
 
 #+caption: DAG for the workflow
 [[file:resources/dag.svg]]
 
-Essentially this is as implemented from [3] [[https://github.com/TheochemUI/eOn/pull/77][in EON]] (also [[https://github.com/TheochemUI/eOn/pull/230][here]]) discussed in [4].
 ** Setup
-Everything is part of the repository, but ~eOn~ needs to be installed.
+Use the root =pixi.toml=:
+
 #+begin_src bash
-pixi s
+pixi shell -e cpu
 #+end_src
-*** Development
-~git-subrepo~ handles vendored dependencies.
+
 ** Usage
+Run the complete workflow from the repository root:
+
 #+begin_src bash
-pixi s
-snakemake -c4 # or c1
-# View results/plots/04_plots/cineb.png
+pixi run -e cpu all
 #+end_src
-For faster experimental visualization (compared to editing ~config/general_config.yaml~) use ~results~ directly:
+
+Run only the figure targets from existing eOn results:
+
+#+begin_src bash
+pixi run -e cpu figures
+#+end_src
+
+Inspect the plan:
+
+#+begin_src bash
+pixi run -e cpu dry-run
+#+end_src
+
+The figure outputs live in:
+
+#+begin_src text
+results/03_figures/blog
+#+end_src
+
+** Direct plotting
+For a single landscape after the NEB files exist:
+
 #+begin_src bash
 cd results/02_neb/system_100
-python -m rgpycrumbs.cli --dev eon plt-neb \
-    --con-file neb.con --plot-type landscape --project-path \
-    --show-pts --landscape-path all \
-    --plot-structures crit_points --surface-type grad_imq \
-    --ira-kmax 14 --show-legend
+python -m rgpycrumbs.cli eon plt-neb \
+    --con-file neb.con \
+    --plot-type landscape \
+    --project-path \
+    --show-pts \
+    --landscape-path all \
+    --plot-structures crit_points \
+    --surface-type grad_imq \
+    --input-dat-pattern "neb_*.dat" \
+    --input-path-pattern "neb_path*.con" \
+    --ira-kmax 14 \
+    --show-legend
 #+end_src
-To generate all paper figures at once, run ~bash scripts/all_2d.sh~ from the repository root.
-
-** References
-#+begin_quote
-[1] R. Goswami, M. Masterov, S. Kamath, A. Pena-Torres, and H. Jónsson, “Efficient Implementation of Gaussian Process Regression Accelerated Saddle Point Searches with Application to Molecular Reactions,” J. Chem. Theory Comput., Jul. 2025, doi: 10.1021/acs.jctc.5c00866.
-
-[2] R. Goswami, “Bayesian hierarchical models for quantitative estimates for performance metrics applied to saddle search algorithms,” AIP Adv., vol. 15, no. 8, p. 85210, Aug. 2025, doi: 10.1063/5.0283639.
-
-[3] V. Ásgeirsson et al., “Nudged Elastic Band Method for Molecular Reactions Using Energy-Weighted Springs Combined with Eigenvector Following,” J. Chem. Theory Comput., vol. 17, no. 8, pp. 4929–4945, Aug. 2021, doi: 10.1021/acs.jctc.1c00462.
-
-[4] R. Goswami, “Efficient exploration of chemical kinetics,” Oct. 24, 2025, arXiv: arXiv:2510.21368. doi: 10.48550/arXiv.2510.21368.
-
-[5] R. Goswami and H. Jónsson, “Adaptive pruning for increased robustness and reduced computational overhead in gaussian process accelerated saddle point searches,” Oct. 07, 2025, arXiv: arXiv:2510.06030. doi: 10.48550/arXiv.2510.06030.
-
-[6] F. Bigi et al., “Metatensor and metatomic: foundational libraries for interoperable atomistic machine learning,” Aug. 21, 2025, arXiv: arXiv:2508.15704. doi: 10.48550/arXiv.2508.15704.
-#+end_quote
 
 ** More visual aids
-Re-generate all graphs via:
+Regenerate the Snakemake graphs via:
+
 #+begin_src bash
-pixi r all-graphs
+pixi run all-graphs
 #+end_src
+
 *** Filegraph
 [[file:resources/filegraph.svg]]
+
 *** Rulegraph
 [[file:resources/rulegraph.svg]]
+
+** References
+1. R. Goswami, G. Fraux, S. R. Cox, and C. Corminboeuf,
+   "Two-dimensional RMSD projections for reaction path visualization and
+   validation," MethodsX 2026. doi:10.1016/j.mex.2026.103851.
+2. R. Goswami, G. Fraux, and C. Corminboeuf, "Enhanced climbing image nudged
+   elastic band method with Hessian eigenmode alignment," Frontiers in
+   Chemistry 2026. doi:10.3389/fchem.2026.1807063.
+3. R. Goswami, G. Fraux, and C. Corminboeuf, "Reproducible orchestration of
+   best practices for reaction path optimization with the nudged elastic band,"
+   MethodsX 2026. doi:10.1016/j.mex.2026.103899.
