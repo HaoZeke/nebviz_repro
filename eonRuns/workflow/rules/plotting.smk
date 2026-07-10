@@ -75,6 +75,7 @@ rule plot_profile:
             --output-file {output} \
             --plot-type profile \
             --rc-mode {wildcards.mode} \
+            --spline-method $([ "{wildcards.mode}" = "index" ] && echo spline || echo hermite) \
             --input-dat-pattern "{params.dat_pattern}" \
             --plot-structures {params.plot_structures} \
             --facecolor {params.facecolor} \
