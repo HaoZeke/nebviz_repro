@@ -31,12 +31,15 @@ plotting:
   surface_type_large: grad_imq_ny
   ira_kmax: 14
   dpi: 300
-  figsize_profile: "5.37 3.37"
+  # Width matters; profile height is set by the content-sized strip layout.
+  figsize_profile: "6.4 5.5"
   figsize_landscape: "5.37 5.37"
   fontsize_base: 12
-  zoom_ratio: 0.25
+  zoom_ratio: 0.35
   facecolor: white
-  rotation: "0x,0y,0z"
+  rotation: "15x,55y,0z"
+  perspective_tilt: 8
+  strip_renderer: xyzrender
   plot_structures: crit_points
 eon:
   config: "resources/config.ini"

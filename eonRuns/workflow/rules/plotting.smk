@@ -67,6 +67,8 @@ rule plot_profile:
         facecolor=config["plotting"]["facecolor"],
         rotation=config["plotting"]["rotation"],
         plot_structures=config["plotting"]["plot_structures"],
+        strip_renderer=config["plotting"].get("strip_renderer", "xyzrender"),
+        perspective_tilt=config["plotting"].get("perspective_tilt", 8),
     shell:
         """
         mkdir -p $(dirname {params.cache}) &&
@@ -84,7 +86,9 @@ rule plot_profile:
             --zoom-ratio {params.zoom_ratio} \
             --fontsize-base {params.fontsize_base} \
             --cache-file {params.cache} \
-            --rotation {params.rotation}
+            --rotation {params.rotation} \
+            --strip-renderer {params.strip_renderer} \
+            --perspective-tilt {params.perspective_tilt}
         """
 
 
