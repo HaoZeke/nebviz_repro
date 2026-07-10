@@ -127,7 +127,8 @@ rule plot_landscape:
         title=landscape_title,
         strip_renderer=config["plotting"].get("strip_renderer", "xyzrender"),
         perspective_tilt=config["plotting"].get("perspective_tilt", 8),
-        cmap_landscape=config["plotting"].get("cmap_landscape", "viridis"),
+        cmap_landscape=config["plotting"].get("cmap_landscape", "ruhi_diverging"),
+        theme=config["plotting"].get("theme", "ruhi"),
     shell:
         """
         mkdir -p $(dirname {params.cache}) &&
@@ -145,6 +146,7 @@ rule plot_landscape:
             --ira-kmax {params.ira_kmax} \
             --show-legend \
             --title "{params.title}" \
+            --theme {params.theme} \
             --cmap-landscape {params.cmap_landscape} \
             --facecolor {params.facecolor} \
             --figsize {params.figsize} \

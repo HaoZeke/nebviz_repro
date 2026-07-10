@@ -40,7 +40,8 @@ plotting:
   rotation: "15x,55y,0z"
   perspective_tilt: 8
   strip_renderer: xyzrender
-  cmap_landscape: viridis
+  cmap_landscape: ruhi_diverging
+  theme: ruhi
   plot_structures: crit_points
 eon:
   config: "resources/config.ini"
