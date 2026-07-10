@@ -28,11 +28,20 @@ def landscape_surface(wildcards):
 
 
 def saddle_label(wildcards):
+    # Short strip/legend labels (full citation lives in the post captions).
     return {
-        "system_100": "ORCA B3LYP-D3",
+        "system_100": "ORCA",
         "11_grignard": "Birkholz",
         "bicyclobutane_05": "mlFSM",
     }[system_from_landscape(wildcards)]
+
+
+def landscape_title(wildcards):
+    return {
+        "cyclo": "Cycloaddition",
+        "grignard": "Grignard addition",
+        "bicyclo": "Bicyclobutane opening",
+    }[wildcards.landscape]
 
 
 rule stack_info:
@@ -115,6 +124,10 @@ rule plot_landscape:
         ira_kmax=config["plotting"]["ira_kmax"],
         surface=landscape_surface,
         label=saddle_label,
+        title=landscape_title,
+        strip_renderer=config["plotting"].get("strip_renderer", "xyzrender"),
+        perspective_tilt=config["plotting"].get("perspective_tilt", 8),
+        cmap_landscape=config["plotting"].get("cmap_landscape", "viridis"),
     shell:
         """
         mkdir -p $(dirname {params.cache}) &&
@@ -131,6 +144,8 @@ rule plot_landscape:
             --input-path-pattern "{params.path_pattern}" \
             --ira-kmax {params.ira_kmax} \
             --show-legend \
+            --title "{params.title}" \
+            --cmap-landscape {params.cmap_landscape} \
             --facecolor {params.facecolor} \
             --figsize {params.figsize} \
             --dpi {params.dpi} \
@@ -138,6 +153,8 @@ rule plot_landscape:
             --fontsize-base {params.fontsize_base} \
             --cache-file {params.cache} \
             --rotation {params.rotation} \
+            --strip-renderer {params.strip_renderer} \
+            --perspective-tilt {params.perspective_tilt} \
             --additional-con {input.saddle} "{params.label}"
         """
 

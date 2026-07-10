@@ -22,8 +22,8 @@ SYSTEM_LABELS = {
 COLORS = {
     "ink": "#1f2933",
     "muted": "#657786",
-    "teal": "#007c78",
-    "coral": "#d95f4f",
+    "teal": "#004D40",
+    "coral": "#FF655D",
     "gold": "#b7791f",
     "plum": "#6b4c9a",
 }
@@ -34,16 +34,18 @@ def set_style() -> None:
         {
             "figure.dpi": 180,
             "savefig.dpi": 300,
-            "font.size": 10,
-            "axes.titlesize": 12,
-            "axes.labelsize": 10,
+            "font.size": 11,
+            "axes.titlesize": 13,
+            "axes.labelsize": 11,
             "axes.spines.top": False,
             "axes.spines.right": False,
             "axes.grid": True,
             "grid.color": "#d7dde2",
             "grid.linewidth": 0.6,
             "grid.alpha": 0.7,
-            "legend.frameon": False,
+            "legend.frameon": True,
+            "legend.framealpha": 0.95,
+            "legend.edgecolor": "#d7dde2",
         }
     )
 
@@ -58,7 +60,7 @@ def parse_dat(path: Path) -> list[dict[str, float | int]]:
                 continue
             rows.append(
                 {
-                    "image": int(parts[0]),
+                    "image": int(float(parts[0])),
                     "rxn_coord": float(parts[1]),
                     "energy": float(parts[2]),
                     "f_para": float(parts[3]),
@@ -80,45 +82,8 @@ def load_iterations(folder: Path) -> dict[int, list[dict[str, float | int]]]:
 
 def save(fig: plt.Figure, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(path, bbox_inches="tight")
+    fig.savefig(path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
-
-
-def plot_pipeline(path: Path) -> None:
-    set_style()
-    fig, ax = plt.subplots(figsize=(12.2, 2.45))
-    ax.set_axis_off()
-    labels = [
-        ("Inputs", "reactant\nproduct\nsaddle"),
-        ("eOn", "PET-MAD\nreadcon v2 con\nNEB movies"),
-        ("rgpycrumbs", "path profile\nimage profile\nRMSD profile"),
-        ("2D RMSD", "sampled images\nGP surface\nuncertainty"),
-        ("Diagnostics", "barrier trace\nforce heatmap\nspacing"),
-    ]
-    xs = np.linspace(0.08, 0.92, len(labels))
-    for idx, (x, (title, body)) in enumerate(zip(xs, labels)):
-        rect = mpl.patches.FancyBboxPatch(
-            (x - 0.085, 0.33),
-            0.17,
-            0.42,
-            boxstyle="round,pad=0.018,rounding_size=0.015",
-            linewidth=1.2,
-            edgecolor=COLORS["teal"] if idx % 2 == 0 else COLORS["plum"],
-            facecolor="#f7fafc",
-        )
-        ax.add_patch(rect)
-        ax.text(x, 0.62, title, ha="center", va="center", weight="bold", color=COLORS["ink"])
-        ax.text(x, 0.47, body, ha="center", va="center", color=COLORS["muted"], linespacing=1.25)
-        if idx < len(labels) - 1:
-            ax.annotate(
-                "",
-                xy=(xs[idx + 1] - 0.105, 0.54),
-                xytext=(x + 0.105, 0.54),
-                arrowprops={"arrowstyle": "->", "lw": 1.6, "color": COLORS["gold"]},
-            )
-    ax.text(0.5, 0.12, "Snakemake target graph for the blog figures", ha="center", color=COLORS["ink"])
-    save(fig, path)
 
 
 def write_readcon_summary(paths: list[Path], output: Path) -> None:
@@ -145,52 +110,86 @@ def write_readcon_summary(paths: list[Path], output: Path) -> None:
 
 def plot_convergence(neb_root: Path, blog_system: str, output: Path) -> None:
     grouped = load_iterations(neb_root / blog_system)
-    iterations = np.asarray(list(grouped.keys()))
-    barriers = np.asarray([max(float(row["energy"]) for row in grouped[it]) for it in iterations])
-    max_force = np.asarray([max(abs(float(row["f_para"])) for row in grouped[it]) for it in iterations])
+    iterations = np.asarray(sorted(grouped.keys()))
+    barriers = np.asarray(
+        [max(float(row["energy"]) for row in grouped[int(it)]) for it in iterations]
+    )
+    max_force = np.asarray(
+        [max(abs(float(row["f_para"])) for row in grouped[int(it)]) for it in iterations]
+    )
 
-    fig, ax1 = plt.subplots(figsize=(7.1, 4.1))
-    ax1.plot(iterations, barriers, color=COLORS["teal"], lw=2.0, label="barrier")
-    ax1.set_xlabel("NEB optimization step")
+    fig, (ax1, ax2) = plt.subplots(
+        2,
+        1,
+        sharex=True,
+        figsize=(7.2, 5.4),
+        layout="constrained",
+        gridspec_kw={"height_ratios": [1.15, 1.0]},
+    )
+    ax1.plot(iterations, barriers, color=COLORS["teal"], lw=2.1, marker="o", ms=3.5)
     ax1.set_ylabel("Barrier / eV", color=COLORS["teal"])
     ax1.tick_params(axis="y", labelcolor=COLORS["teal"])
-    ax2 = ax1.twinx()
-    ax2.plot(iterations, max_force, color=COLORS["coral"], lw=2.0, label="max |parallel force|")
-    ax2.set_ylabel("Max |parallel force| / eV A$^{-1}$", color=COLORS["coral"])
+    ax1.set_title(f"Barrier and force convergence ({SYSTEM_LABELS.get(blog_system, blog_system)})")
+    ax1.set_ylim(bottom=min(barriers.min() * 0.98, barriers.min() - 0.02))
+
+    ax2.plot(iterations, max_force, color=COLORS["coral"], lw=2.1, marker="o", ms=3.5)
+    ax2.set_xlabel("NEB optimization step")
+    ax2.set_ylabel(r"Max $|F_\parallel|$ / eV $\mathrm{\AA}^{-1}$", color=COLORS["coral"])
     ax2.tick_params(axis="y", labelcolor=COLORS["coral"])
-    ax1.set_title("Barrier and force convergence")
-    lines = ax1.get_lines() + ax2.get_lines()
-    ax1.legend(lines, [line.get_label() for line in lines], loc="upper right")
+    # Full dynamic range — do not zoom the force axis into noise
+    f_lo, f_hi = float(max_force.min()), float(max_force.max())
+    pad = max(0.05 * (f_hi - f_lo), 0.05)
+    ax2.set_ylim(f_lo - pad, f_hi + pad)
+    ax2.set_xticks(iterations[:: max(len(iterations) // 10, 1)])
     save(fig, output)
 
 
 def plot_force_heatmap(neb_root: Path, blog_system: str, output: Path) -> None:
     grouped = load_iterations(neb_root / blog_system)
-    iterations = list(grouped)
+    iterations = sorted(grouped)
     images = [int(row["image"]) for row in grouped[iterations[-1]]]
     heat = np.zeros((len(iterations), len(images)))
     for i, iteration in enumerate(iterations):
-        force_by_image = {int(row["image"]): abs(float(row["f_para"])) for row in grouped[iteration]}
+        force_by_image = {
+            int(row["image"]): abs(float(row["f_para"])) for row in grouped[iteration]
+        }
         for j, image in enumerate(images):
             heat[i, j] = force_by_image.get(image, np.nan)
 
-    fig, ax = plt.subplots(figsize=(7.1, 4.2))
+    final_rows = grouped[iterations[-1]]
+    climb = int(max(final_rows, key=lambda r: float(r["energy"]))["image"])
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.4))
+    # Integer cell centers: image and step are discrete
     mesh = ax.imshow(
         heat,
         aspect="auto",
         origin="lower",
         cmap="magma",
-        extent=[min(images), max(images), min(iterations), max(iterations)],
+        interpolation="nearest",
+        extent=[
+            images[0] - 0.5,
+            images[-1] + 0.5,
+            iterations[0] - 0.5,
+            iterations[-1] + 0.5,
+        ],
     )
-    fig.colorbar(mesh, ax=ax, label="|parallel force| / eV A$^{-1}$")
+    fig.colorbar(mesh, ax=ax, label=r"$|F_\parallel|$ / eV $\mathrm{\AA}^{-1}$")
+    ax.axvline(climb, color="white", ls="--", lw=1.2, alpha=0.9, label=f"highest image ({climb})")
     ax.set_xlabel("Image index")
     ax.set_ylabel("NEB optimization step")
-    ax.set_title("Where the band still moves")
+    ax.set_title(f"Where the band still moves ({SYSTEM_LABELS.get(blog_system, blog_system)})")
+    # Integer ticks only
+    step = max(1, len(images) // 10)
+    ax.set_xticks(images[::step])
+    ystep = max(1, len(iterations) // 10)
+    ax.set_yticks(iterations[::ystep])
+    ax.legend(loc="upper left", fontsize=9)
     save(fig, output)
 
 
 def plot_sampling_density(neb_root: Path, output: Path) -> None:
-    fig, ax = plt.subplots(figsize=(7.1, 4.1))
+    fig, ax = plt.subplots(figsize=(7.2, 4.2))
     colors = [COLORS["teal"], COLORS["gold"], COLORS["plum"]]
     for idx, system in enumerate(SYSTEM_LABELS):
         grouped = load_iterations(neb_root / system)
@@ -198,16 +197,16 @@ def plot_sampling_density(neb_root: Path, output: Path) -> None:
         rxn = np.asarray([float(row["rxn_coord"]) for row in final_rows])
         spacing = np.diff(rxn)
         ax.plot(
-            np.arange(len(spacing)) + idx * 0.08,
+            np.arange(len(spacing)),
             spacing,
             marker="o",
-            lw=1.7,
-            ms=4.0,
+            lw=1.8,
+            ms=4.2,
             color=colors[idx],
             label=SYSTEM_LABELS[system],
         )
     ax.set_xlabel("Segment index")
-    ax.set_ylabel("Path-length spacing / A")
+    ax.set_ylabel(r"Path-length spacing / $\mathrm{\AA}$")
     ax.set_title("Final-band image spacing")
     ax.legend(loc="best")
     save(fig, output)
@@ -225,9 +224,6 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    pipeline = subparsers.add_parser("pipeline")
-    pipeline.add_argument("--output", required=True)
-
     summary = subparsers.add_parser("readcon-summary")
     summary.add_argument("--output", required=True)
     summary.add_argument("cons", nargs="+")
@@ -239,9 +235,41 @@ def main() -> None:
     diag.add_argument("--force-heatmap", required=True)
     diag.add_argument("--sampling-density", required=True)
 
+    # keep pipeline subcommand for snakemake compatibility (no-op redirect)
+    pipe = subparsers.add_parser("pipeline")
+    pipe.add_argument("--output", required=True)
+
     args = parser.parse_args()
     if args.command == "pipeline":
-        plot_pipeline(Path(args.output))
+        # Blog pipeline figure is Graphviz DOT in the post; write a tiny placeholder note file only if needed
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        # Still produce a PNG via graphviz if available, else skip
+        import shutil
+        import subprocess
+        import tempfile
+
+        if shutil.which("dot"):
+            source = r'''
+digraph NEBProjectionPipeline {
+  graph [fontname="Jost", fontsize=15, bgcolor="white", rankdir=TB, nodesep=0.40, ranksep=0.45, pad=0.18];
+  node [fontname="Jost", fontsize=15, shape=box, style="rounded,filled", fillcolor="white", color="#004D40", fontcolor="#004D40", penwidth=2.0, margin="0.30,0.18", width=3.6];
+  edge [fontname="Jost", fontsize=13, color="#004D40", penwidth=1.8, arrowsize=1.0];
+  neb [label="1. NEB band  ·  3N coords, E, F_parallel", fillcolor="#FF655D", fontcolor="white", color="#FF655D"];
+  ira [label="2. IRA RMSD  ·  r = d(R), p = d(P)"];
+  grad [label="3. Synthetic gradients in (r, p)"];
+  gp [label="4. Grad-enhanced GP  ·  IMQ kernel, mean + variance", fillcolor="#F1DB4B", color="#004D40"];
+  sd [label="5. Rotate frame  ·  s progress, d orthogonal"];
+  out [label="6. s-d landscape  ·  path, samples, variance contours", fillcolor="#004D40", fontcolor="white", color="#004D40"];
+  neb -> ira -> grad -> gp -> sd -> out;
+}
+'''
+            with tempfile.NamedTemporaryFile("w", suffix=".dot", delete=False) as fh:
+                fh.write(source)
+                dpath = fh.name
+            subprocess.run(["dot", "-Tpng", "-Gdpi=220", "-o", args.output, dpath], check=True)
+            Path(dpath).unlink(missing_ok=True)
+        else:
+            Path(args.output).write_bytes(b"")
     elif args.command == "readcon-summary":
         write_readcon_summary([Path(path) for path in args.cons], Path(args.output))
     elif args.command == "diagnostics":
