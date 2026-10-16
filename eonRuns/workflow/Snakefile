@@ -32,9 +32,7 @@ def get_figure_targets(wildcards):
         f"{fig_dir}/{prefix}-2d-cyclo.png",
         f"{fig_dir}/{prefix}-2d-grignard.png",
         f"{fig_dir}/{prefix}-2d-bicyclo.png",
-        f"{fig_dir}/{prefix}-convergence.png",
-        f"{fig_dir}/{prefix}-force-heatmap.png",
-        f"{fig_dir}/{prefix}-sampling-density.png",
+        f"{fig_dir}/{prefix}-force.png",
         f"{fig_dir}/readcon-v2-summary.csv",
         f"{fig_dir}/stack.json",
     ]

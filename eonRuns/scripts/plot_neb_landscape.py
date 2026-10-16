@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Blog 2D NEB landscapes with the layout fixes the post needs.
+"""Blog 2D NEB landscapes.
 
 Wraps ``rgpycrumbs`` ``plt-neb`` and then:
 
-- fades the GP color where no NEB sample is nearby (high posterior variance)
+- leaves the GP surface as fitted (no white wash over unsampled regions)
 - keeps σ² labels fully inside the axes
-- moves the on-plot SP / reference-saddle labels off the star markers
-- uses DejaVu Sans for ticks so the zero matches the other blog figures
+- moves the on-plot SP / reference-saddle labels off the star markers and the path
+- uses DejaVu Sans for ticks so the zero is open
   (Atkinson Hyperlegible, the Ruhi face, draws a slashed zero)
 - renders every structure strip with the same xyzrender ``paton`` preset
+
+The s–d window stays the library square (1 Å of progress matches 1 Å of
+deviation). Grignard and bicyclobutane spans differ by more than 2×, so the
+shared map size is the matching scale; stretching either window to a common
+Å-per-inch would crop the longer path or pad the shorter one with empty GP.
 """
 
 from __future__ import annotations
@@ -25,13 +30,6 @@ from matplotlib.patches import FancyArrowPatch
 from matplotlib.transforms import Bbox
 
 log = logging.getLogger("plot_neb_landscape")
-
-# Distance to the nearest sample, as a fraction of the longer (s, d) span.
-# Inside the start radius the surface is left alone. Past the full radius
-# the GP color is washed out. The band itself sits on the samples.
-FADE_START_FRAC = 0.065
-FADE_FULL_FRAC = 0.13
-FADE_ALPHA = 0.90
 
 _ON_PLOT_LABELS = {"R", "SP", "P", "Birkholz", "mlFSM", "ORCA"}
 _NUDGE_LABELS = {"SP", "Birkholz", "mlFSM", "ORCA"}
@@ -58,64 +56,6 @@ def _install_font_hook() -> None:
 
     theme_mod.setup_global_theme = setup_global_theme
     plt_neb.setup_global_theme = setup_global_theme
-
-
-def _sample_points(ax) -> np.ndarray | None:
-    chunks: list[np.ndarray] = []
-    for coll in ax.collections:
-        if not isinstance(coll, PathCollection):
-            continue
-        offsets = np.asarray(coll.get_offsets(), dtype=float)
-        if offsets.ndim != 2 or offsets.shape[1] != 2 or len(offsets) < 8:
-            continue
-        finite = offsets[np.isfinite(offsets).all(axis=1)]
-        if len(finite) >= 8:
-            chunks.append(finite)
-    if not chunks:
-        return None
-    return np.vstack(chunks)
-
-
-def _fade_unsupported_surface(ax) -> None:
-    """Wash out GP color far from sampled structures."""
-    samples = _sample_points(ax)
-    if samples is None:
-        return
-    xlim, ylim = ax.get_xlim(), ax.get_ylim()
-    xs = np.linspace(xlim[0], xlim[1], 220)
-    ys = np.linspace(ylim[0], ylim[1], 220)
-    xx, yy = np.meshgrid(xs, ys)
-    grid = np.column_stack([xx.ravel(), yy.ravel()])
-    try:
-        from scipy.spatial import cKDTree
-
-        distance = cKDTree(samples).query(grid, k=1)[0]
-    except Exception:
-        distance = np.empty(len(grid))
-        block = 4000
-        for start in range(0, len(grid), block):
-            chunk = grid[start : start + block]
-            delta = chunk[:, None, :] - samples[None, :, :]
-            distance[start : start + block] = np.sqrt((delta * delta).sum(axis=2)).min(axis=1)
-    distance = distance.reshape(xx.shape)
-    span = max(xlim[1] - xlim[0], ylim[1] - ylim[0], 1e-6)
-    start = FADE_START_FRAC * span
-    full = max(FADE_FULL_FRAC * span, start + 1e-6)
-    alpha = np.clip((distance - start) / (full - start), 0.0, 1.0) * FADE_ALPHA
-    rgba = np.ones(xx.shape + (4,), dtype=float)
-    rgba[..., 3] = alpha
-    aspect = ax.get_aspect()
-    ax.imshow(
-        rgba,
-        extent=(xlim[0], xlim[1], ylim[0], ylim[1]),
-        origin="lower",
-        interpolation="bilinear",
-        zorder=11,
-        aspect="auto",
-    )
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    ax.set_aspect(aspect)
 
 
 def _is_sigma_label(text: str) -> bool:
@@ -366,8 +306,6 @@ def _polish_landscape(fig) -> None:
     for ax in axes:
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontname("DejaVu Sans")
-        # Limits are final here (the square s–d window is set after the GP draw).
-        _fade_unsupported_surface(ax)
         for text in ax.texts:
             if text.get_zorder() < 20:
                 text.set_zorder(20)
@@ -467,11 +405,7 @@ def main() -> None:
     if not output.is_file() or output.stat().st_size < 1000:
         msg = f"Landscape figure was not written: {output}"
         raise SystemExit(msg)
-    # Blog filenames keep the theme in the stem (neb-viz-2d-grignard-ruhi.png).
-    if args.theme == "ruhi" and "-ruhi" not in output.stem:
-        alias = output.with_name(f"{output.stem}-ruhi{output.suffix}")
-        alias.write_bytes(output.read_bytes())
-        log.info("Wrote %s", alias)
+    log.info("Wrote %s", output)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ The workflow covers:
 - eOn energy-weighted OCI-NEB runs
 - readcon v2 checks for generated =.con= trajectories
 - rgpycrumbs and chemparseplot figures
-- convergence, force, and image-spacing diagnostics
+- a force-versus-step line for the cycloaddition barrier
 
 The Atomistic Cookbook version of the eOn/PET-MAD workflow is available at
 [[https://atomistic-cookbook.org/examples/eon-pet-neb/eon-pet-neb.html]].
@@ -65,9 +65,7 @@ The Snakemake target =all_figures= produces:
 - =neb-viz-2d-cyclo.png=
 - =neb-viz-2d-grignard.png=
 - =neb-viz-2d-bicyclo.png=
-- =neb-viz-convergence.png=
-- =neb-viz-force-heatmap.png=
-- =neb-viz-sampling-density.png=
+- =neb-viz-force.png=
 
 * References
 If you use this repository, cite the corresponding method papers:

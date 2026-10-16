@@ -171,20 +171,12 @@ rule readcon_summary:
         "python scripts/plot_neb_diagnostics.py readcon-summary --output {output} {input}"
 
 
-rule plot_convergence:
+rule plot_force:
     input:
-        expand(
-            f"{config['paths']['neb']}/{{system}}/results.dat",
-            system=list(config["systems"].keys()),
-        ),
-        expand(
-            f"{config['paths']['neb']}/{{system}}/neb.con",
-            system=list(config["systems"].keys()),
-        ),
+        f"{config['paths']['neb']}/{blog_system()}/results.dat",
+        f"{config['paths']['neb']}/{blog_system()}/neb.con",
     output:
-        f"{figure_dir()}/{prefix()}-convergence.png",
-        f"{figure_dir()}/{prefix()}-force-heatmap.png",
-        f"{figure_dir()}/{prefix()}-sampling-density.png",
+        f"{figure_dir()}/{prefix()}-force.png",
     params:
         neb_root=config["paths"]["neb"],
         blog_system=blog_system(),
@@ -192,6 +184,4 @@ rule plot_convergence:
         "python scripts/plot_neb_diagnostics.py diagnostics "
         "--neb-root {params.neb_root} "
         "--blog-system {params.blog_system} "
-        "--convergence {output[0]} "
-        "--force-heatmap {output[1]} "
-        "--sampling-density {output[2]}"
+        "--force {output}"

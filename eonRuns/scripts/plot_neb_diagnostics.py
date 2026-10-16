@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot NEB diagnostics that complement the rgpycrumbs path figures."""
+"""Force-versus-step line for the blog cycloaddition, plus readcon helpers."""
 
 from __future__ import annotations
 
@@ -19,17 +19,12 @@ SYSTEM_LABELS = {
     "bicyclobutane_05": "Bicyclobutane opening",
 }
 
-# Ruhi palette (chemparseplot RUHI_COLORS). Series order matches SYSTEM_LABELS.
+# Ruhi palette (chemparseplot RUHI_COLORS).
 COLORS = {
     "ink": "#1f2933",
-    "muted": "#657786",
     "teal": "#004D40",
     "coral": "#FF655D",
-    "sky": "#1E88E5",
-    "sunshine": "#F1DB4B",
-    "magenta": "#D81B60",
 }
-SERIES_COLORS = [COLORS["teal"], COLORS["coral"], COLORS["sky"]]
 
 
 def set_style() -> None:
@@ -54,10 +49,7 @@ def set_style() -> None:
             "axes.edgecolor": "black",
             "axes.labelcolor": "black",
             "text.color": "black",
-            "axes.grid": True,
-            "grid.color": "#d7dde2",
-            "grid.linewidth": 0.6,
-            "grid.alpha": 0.7,
+            "axes.grid": False,
             "legend.frameon": True,
             "legend.framealpha": 0.95,
             "legend.edgecolor": "#d7dde2",
@@ -127,189 +119,94 @@ def write_readcon_summary(paths: list[Path], output: Path) -> None:
             )
 
 
-def plot_convergence(neb_root: Path, blog_system: str, output: Path) -> None:
+def _plateau_start(barriers: np.ndarray) -> int | None:
+    """First index whose tail stays within 0.04 eV (the barrier has flattened)."""
+    if len(barriers) < 4:
+        return None
+    for idx in range(len(barriers)):
+        if float(np.ptp(barriers[idx:])) <= 0.04 and len(barriers) - idx >= 3:
+            return idx
+    return None
+
+
+def plot_force_vs_step(neb_root: Path, blog_system: str, output: Path) -> None:
+    """One line plot: barrier and max parallel force against optimization step.
+
+    The cycloaddition barrier settles while max |F∥| stays near 2.7–2.9 eV/Å.
+    Both series share the step axis so that split is visible without a second panel.
+    """
     grouped = load_iterations(neb_root / blog_system)
-    iterations = np.asarray(sorted(grouped.keys()))
+    iterations = np.asarray(sorted(grouped.keys()), dtype=float)
     barriers = np.asarray(
         [max(float(row["energy"]) for row in grouped[int(it)]) for it in iterations]
     )
     max_force = np.asarray(
         [max(abs(float(row["f_para"])) for row in grouped[int(it)]) for it in iterations]
     )
+    label = SYSTEM_LABELS.get(blog_system, blog_system)
 
-    fig, (ax1, ax2) = plt.subplots(
-        2,
-        1,
-        sharex=True,
-        figsize=(7.2, 5.4),
-        layout="constrained",
-        gridspec_kw={"height_ratios": [1.15, 1.0]},
-    )
-    ax1.plot(iterations, barriers, color=COLORS["teal"], lw=2.1, marker="o", ms=3.5)
-    ax1.set_ylabel("Barrier / eV", color=COLORS["teal"])
-    ax1.tick_params(axis="y", labelcolor=COLORS["teal"])
-    ax1.set_title(f"Barrier and force convergence ({SYSTEM_LABELS.get(blog_system, blog_system)})")
-    ax1.set_ylim(bottom=min(barriers.min() * 0.98, barriers.min() - 0.02))
+    fig, ax = plt.subplots(figsize=(6.8, 3.9), layout="constrained")
+    ax.plot(iterations, barriers, color=COLORS["teal"], lw=2.3, label="Barrier")
+    ax.set_xlabel("NEB optimization step")
+    ax.set_ylabel("Barrier / eV", color=COLORS["teal"])
+    ax.tick_params(axis="y", labelcolor=COLORS["teal"])
+    b_lo, b_hi = float(barriers.min()), float(barriers.max())
+    b_pad = max(0.08 * (b_hi - b_lo), 0.02)
+    ax.set_ylim(b_lo - b_pad, b_hi + b_pad)
 
-    ax2.plot(iterations, max_force, color=COLORS["coral"], lw=2.1, marker="o", ms=3.5)
-    ax2.set_xlabel("NEB optimization step")
-    ax2.set_ylabel("Max |F∥| / eV Å$^{-1}$", color=COLORS["coral"])
-    ax2.tick_params(axis="y", labelcolor=COLORS["coral"])
-    # Full dynamic range — do not zoom the force axis into noise
+    ax_f = ax.twinx()
+    ax_f.plot(iterations, max_force, color=COLORS["coral"], lw=2.3, label="Max |F∥|")
+    ax_f.set_ylabel("Max |F∥| / eV Å$^{-1}$", color=COLORS["coral"])
+    ax_f.tick_params(axis="y", labelcolor=COLORS["coral"])
     f_lo, f_hi = float(max_force.min()), float(max_force.max())
-    pad = max(0.05 * (f_hi - f_lo), 0.05)
-    ax2.set_ylim(f_lo - pad, f_hi + pad)
-    ax2.set_xticks(iterations[:: max(len(iterations) // 10, 1)])
-    _annotate_force_plateau(ax2, iterations, barriers, max_force)
-    save(fig, output)
+    f_pad = max(0.12 * (f_hi - f_lo), 0.04)
+    ax_f.set_ylim(f_lo - f_pad, f_hi + 1.6 * f_pad)
+    ax_f.grid(False)
+    ax_f.spines["top"].set_visible(False)
 
-
-def _annotate_force_plateau(ax, iterations, barriers, max_force) -> None:
-    """Note that a flat barrier with a high force is the optimizer, not a glitch.
-
-    The cycloaddition band settles near 1.03 eV while max |F∥| stays near
-    2.7–2.9 eV/Å. That split is in the force table.
-    """
-    if len(barriers) < 4:
-        return
-    start = 0
-    for idx in range(len(barriers)):
-        if float(np.ptp(barriers[idx:])) <= 0.04:
-            start = idx
-            break
-    else:
-        return
-    if len(barriers) - start < 3:
-        return
-    late_force = max_force[start:]
-    lo, hi = float(late_force.min()), float(late_force.max())
-    # Only call out a plateau that is still far from a tight force convergence.
-    if hi < 0.5 or (hi - lo) > 1.0:
-        return
-    step = int(iterations[start])
-    # The published cycloaddition plateau is ~2.7–2.9 eV/Å (one step touches 2.95).
-    if 2.6 <= lo <= 2.85 and 2.85 <= hi <= 3.05:
-        force_note = "~2.7–2.9 eV/Å"
-    else:
-        force_note = f"{lo:.2f}–{hi:.2f} eV/Å"
-    note = f"Barrier is flat from step {step}.\nMax |F∥| stays {force_note}."
-    ax.annotate(
-        note,
-        xy=(float(iterations[-1]), float(np.median(late_force))),
-        xytext=(0.98, 0.97),
-        textcoords=ax.transAxes,
-        ha="right",
-        va="top",
-        fontsize=9,
-        color=COLORS["ink"],
-        bbox={
-            "boxstyle": "round,pad=0.35",
-            "facecolor": "white",
-            "edgecolor": "#d7dde2",
-            "alpha": 0.96,
-        },
-        arrowprops={"arrowstyle": "-", "color": COLORS["muted"], "lw": 0.8},
-        zorder=5,
-    )
-
-
-def plot_force_heatmap(neb_root: Path, blog_system: str, output: Path) -> None:
-    grouped = load_iterations(neb_root / blog_system)
-    iterations = sorted(grouped)
-    images = [int(row["image"]) for row in grouped[iterations[-1]]]
-    heat = np.zeros((len(iterations), len(images)))
-    for i, iteration in enumerate(iterations):
-        force_by_image = {
-            int(row["image"]): abs(float(row["f_para"])) for row in grouped[iteration]
-        }
-        for j, image in enumerate(images):
-            heat[i, j] = force_by_image.get(image, np.nan)
-
-    final_rows = grouped[iterations[-1]]
-    climb = int(max(final_rows, key=lambda r: float(r["energy"]))["image"])
-
-    fig, ax = plt.subplots(figsize=(7.2, 4.4))
-    # Integer cell centers: image and step are discrete
-    mesh = ax.imshow(
-        heat,
-        aspect="auto",
-        origin="lower",
-        cmap="magma",
-        interpolation="nearest",
-        extent=[
-            images[0] - 0.5,
-            images[-1] + 0.5,
-            iterations[0] - 0.5,
-            iterations[-1] + 0.5,
-        ],
-    )
-    fig.colorbar(mesh, ax=ax, label="|F∥| / eV Å$^{-1}$", pad=0.02)
-    ax.axvline(climb, color="white", ls="--", lw=1.2, alpha=0.9, label=f"highest image ({climb})")
-    ax.set_xlabel("Image index")
-    ax.set_ylabel("NEB optimization step")
-    ax.set_title(f"Where the band still moves ({SYSTEM_LABELS.get(blog_system, blog_system)})")
-    # Integer ticks only. No grid: it draws through the cells.
-    step = max(1, len(images) // 10)
-    ax.set_xticks(images[::step])
-    ystep = max(1, len(iterations) // 10)
-    ax.set_yticks(iterations[::ystep])
-    ax.grid(False)
-    ax.legend(
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.18),
-        borderaxespad=0.0,
-        fontsize=9,
-        frameon=True,
-    )
-    save(fig, output)
-
-
-def plot_sampling_density(neb_root: Path, output: Path) -> None:
-    fig, ax = plt.subplots(figsize=(7.2, 4.4))
-    xmax = 0
-    for idx, system in enumerate(SYSTEM_LABELS):
-        grouped = load_iterations(neb_root / system)
-        final_rows = grouped[max(grouped)]
-        rxn = np.asarray([float(row["rxn_coord"]) for row in final_rows])
-        spacing = np.diff(rxn)
-        spacing = spacing[np.isfinite(spacing) & (spacing > 0)]
-        x = np.arange(len(spacing))
-        xmax = max(xmax, int(x[-1]) if len(x) else 0)
-        ax.plot(
-            x,
-            spacing,
-            marker="o",
-            lw=1.8,
-            ms=4.2,
-            color=SERIES_COLORS[idx % len(SERIES_COLORS)],
-            label=SYSTEM_LABELS[system],
-        )
-    # The Grignard reactant segment is several angstroms. A linear axis
-    # flattens the cycloaddition and bicyclobutane spacings under that spike.
-    ax.set_yscale("log")
-    ax.set_xlabel("Segment index")
-    ax.set_ylabel("Path-length spacing / Å")
-    ax.set_title("Final-band image spacing")
-    ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=9, integer=True, min_n_ticks=4))
+    ax.set_xlim(float(iterations[0]) - 0.4, float(iterations[-1]) + 0.4)
+    step0 = int(iterations[0])
+    step1 = int(iterations[-1])
+    stride = 4 if step1 - step0 > 16 else 2
+    ax.set_xticks(list(range(step0, step1 + 1, stride)))
     ax.xaxis.set_major_formatter(mpl.ticker.FormatStrFormatter("%d"))
-    ax.set_xlim(-0.5, xmax + 0.5)
-    # The Grignard spike sits in the upper-left corner, so the legend stays outside.
-    ax.legend(
-        loc="center left",
-        bbox_to_anchor=(1.02, 0.5),
-        borderaxespad=0.0,
-        fontsize=9,
-        frameon=True,
-    )
+    ax.set_title(label)
+    ax.grid(False)
+
+    handles = [
+        mpl.lines.Line2D([0], [0], color=COLORS["teal"], lw=2.3, label="Barrier"),
+        mpl.lines.Line2D([0], [0], color=COLORS["coral"], lw=2.3, label="Max |F∥|"),
+    ]
+    # Both series leave the upper-right empty after the first few steps.
+    ax.legend(handles=handles, loc="upper right", frameon=False, borderaxespad=0.15)
+
+    start = _plateau_start(barriers)
+    if start is not None:
+        late_force = max_force[start:]
+        lo, hi = float(late_force.min()), float(late_force.max())
+        if hi >= 0.5 and (hi - lo) <= 1.0:
+            step = int(iterations[start])
+            if 2.6 <= lo <= 2.85 and 2.85 <= hi <= 3.05:
+                force_note = "~2.7–2.9 eV/Å"
+            else:
+                force_note = f"{lo:.2f}–{hi:.2f} eV/Å"
+            # Sit in the open band above the plateau, clear of the right-hand ticks.
+            ax.annotate(
+                f"Barrier flat from step {step}\nMax |F∥| stays {force_note}",
+                xy=(0.50, 0.70),
+                xycoords="axes fraction",
+                ha="center",
+                va="top",
+                fontsize=10,
+                color=COLORS["ink"],
+                zorder=5,
+            )
     save(fig, output)
 
 
 def diagnostics(args: argparse.Namespace) -> None:
     set_style()
-    neb_root = Path(args.neb_root)
-    plot_convergence(neb_root, args.blog_system, Path(args.convergence))
-    plot_force_heatmap(neb_root, args.blog_system, Path(args.force_heatmap))
-    plot_sampling_density(neb_root, Path(args.sampling_density))
+    plot_force_vs_step(Path(args.neb_root), args.blog_system, Path(args.force))
 
 
 def main() -> None:
@@ -323,9 +220,7 @@ def main() -> None:
     diag = subparsers.add_parser("diagnostics")
     diag.add_argument("--neb-root", required=True)
     diag.add_argument("--blog-system", required=True)
-    diag.add_argument("--convergence", required=True)
-    diag.add_argument("--force-heatmap", required=True)
-    diag.add_argument("--sampling-density", required=True)
+    diag.add_argument("--force", required=True)
 
     # keep pipeline subcommand for snakemake compatibility (no-op redirect)
     pipe = subparsers.add_parser("pipeline")
