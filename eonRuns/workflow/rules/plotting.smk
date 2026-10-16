@@ -129,23 +129,21 @@ rule plot_landscape:
         perspective_tilt=config["plotting"].get("perspective_tilt", 8),
         cmap_landscape=config["plotting"].get("cmap_landscape", "ruhi_diverging"),
         theme=config["plotting"].get("theme", "ruhi"),
+        xyzrender_config=config["plotting"].get("xyzrender_config", "paton"),
     shell:
         """
         mkdir -p $(dirname {params.cache}) &&
-        python -m rgpycrumbs.cli eon plt-neb \
+        python scripts/plot_neb_landscape.py \
             --con-file {input.con} \
             --output-file {output} \
-            --plot-type landscape \
-            --project-path \
-            --show-pts \
-            --landscape-path all \
-            --plot-structures {params.plot_structures} \
-            --surface-type {params.surface} \
-            --input-dat-pattern "{params.dat_pattern}" \
-            --input-path-pattern "{params.path_pattern}" \
-            --ira-kmax {params.ira_kmax} \
-            --show-legend \
+            --dat-pattern "{params.dat_pattern}" \
+            --path-pattern "{params.path_pattern}" \
+            --cache-file {params.cache} \
+            --saddle {input.saddle} \
+            --saddle-label "{params.label}" \
             --title "{params.title}" \
+            --surface-type {params.surface} \
+            --ira-kmax {params.ira_kmax} \
             --theme {params.theme} \
             --cmap-landscape {params.cmap_landscape} \
             --facecolor {params.facecolor} \
@@ -153,11 +151,11 @@ rule plot_landscape:
             --dpi {params.dpi} \
             --zoom-ratio {params.zoom_ratio} \
             --fontsize-base {params.fontsize_base} \
-            --cache-file {params.cache} \
-            --rotation {params.rotation} \
+            --rotation "{params.rotation}" \
             --strip-renderer {params.strip_renderer} \
+            --xyzrender-config {params.xyzrender_config} \
             --perspective-tilt {params.perspective_tilt} \
-            --additional-con {input.saddle} "{params.label}"
+            --plot-structures {params.plot_structures}
         """
 
 

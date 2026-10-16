@@ -19,26 +19,41 @@ SYSTEM_LABELS = {
     "bicyclobutane_05": "Bicyclobutane opening",
 }
 
+# Ruhi palette (chemparseplot RUHI_COLORS). Series order matches SYSTEM_LABELS.
 COLORS = {
     "ink": "#1f2933",
     "muted": "#657786",
     "teal": "#004D40",
     "coral": "#FF655D",
-    "gold": "#b7791f",
-    "plum": "#6b4c9a",
+    "sky": "#1E88E5",
+    "sunshine": "#F1DB4B",
+    "magenta": "#D81B60",
 }
+SERIES_COLORS = [COLORS["teal"], COLORS["coral"], COLORS["sky"]]
 
 
 def set_style() -> None:
+    """Ruhi colors with an open-zero tick face.
+
+    Atkinson Hyperlegible (the Ruhi theme face) draws a slashed zero.
+    The other blog figures use DejaVu Sans, whose zero is open, so the
+    diagnostics and the 2D panels share that tick font.
+    """
     mpl.rcParams.update(
         {
             "figure.dpi": 180,
             "savefig.dpi": 300,
-            "font.size": 11,
+            "font.family": "DejaVu Sans",
+            "font.size": 12,
             "axes.titlesize": 13,
-            "axes.labelsize": 11,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
             "axes.spines.top": False,
             "axes.spines.right": False,
+            "axes.edgecolor": "black",
+            "axes.labelcolor": "black",
+            "text.color": "black",
             "axes.grid": True,
             "grid.color": "#d7dde2",
             "grid.linewidth": 0.6,
@@ -46,6 +61,10 @@ def set_style() -> None:
             "legend.frameon": True,
             "legend.framealpha": 0.95,
             "legend.edgecolor": "#d7dde2",
+            "mathtext.fontset": "dejavusans",
+            "axes.formatter.use_mathtext": False,
+            "figure.facecolor": "white",
+            "savefig.facecolor": "white",
         }
     )
 
@@ -134,14 +153,64 @@ def plot_convergence(neb_root: Path, blog_system: str, output: Path) -> None:
 
     ax2.plot(iterations, max_force, color=COLORS["coral"], lw=2.1, marker="o", ms=3.5)
     ax2.set_xlabel("NEB optimization step")
-    ax2.set_ylabel(r"Max $|F_\parallel|$ / eV $\mathrm{\AA}^{-1}$", color=COLORS["coral"])
+    ax2.set_ylabel("Max |F∥| / eV Å$^{-1}$", color=COLORS["coral"])
     ax2.tick_params(axis="y", labelcolor=COLORS["coral"])
     # Full dynamic range — do not zoom the force axis into noise
     f_lo, f_hi = float(max_force.min()), float(max_force.max())
     pad = max(0.05 * (f_hi - f_lo), 0.05)
     ax2.set_ylim(f_lo - pad, f_hi + pad)
     ax2.set_xticks(iterations[:: max(len(iterations) // 10, 1)])
+    _annotate_force_plateau(ax2, iterations, barriers, max_force)
     save(fig, output)
+
+
+def _annotate_force_plateau(ax, iterations, barriers, max_force) -> None:
+    """Note that a flat barrier with a high force is the optimizer, not a glitch.
+
+    The cycloaddition band settles near 1.03 eV while max |F∥| stays near
+    2.7–2.9 eV/Å. That split is in the force table.
+    """
+    if len(barriers) < 4:
+        return
+    start = 0
+    for idx in range(len(barriers)):
+        if float(np.ptp(barriers[idx:])) <= 0.04:
+            start = idx
+            break
+    else:
+        return
+    if len(barriers) - start < 3:
+        return
+    late_force = max_force[start:]
+    lo, hi = float(late_force.min()), float(late_force.max())
+    # Only call out a plateau that is still far from a tight force convergence.
+    if hi < 0.5 or (hi - lo) > 1.0:
+        return
+    step = int(iterations[start])
+    # The published cycloaddition plateau is ~2.7–2.9 eV/Å (one step touches 2.95).
+    if 2.6 <= lo <= 2.85 and 2.85 <= hi <= 3.05:
+        force_note = "~2.7–2.9 eV/Å"
+    else:
+        force_note = f"{lo:.2f}–{hi:.2f} eV/Å"
+    note = f"Barrier is flat from step {step}.\nMax |F∥| stays {force_note}."
+    ax.annotate(
+        note,
+        xy=(float(iterations[-1]), float(np.median(late_force))),
+        xytext=(0.98, 0.97),
+        textcoords=ax.transAxes,
+        ha="right",
+        va="top",
+        fontsize=9,
+        color=COLORS["ink"],
+        bbox={
+            "boxstyle": "round,pad=0.35",
+            "facecolor": "white",
+            "edgecolor": "#d7dde2",
+            "alpha": 0.96,
+        },
+        arrowprops={"arrowstyle": "-", "color": COLORS["muted"], "lw": 0.8},
+        zorder=5,
+    )
 
 
 def plot_force_heatmap(neb_root: Path, blog_system: str, output: Path) -> None:
@@ -174,41 +243,64 @@ def plot_force_heatmap(neb_root: Path, blog_system: str, output: Path) -> None:
             iterations[-1] + 0.5,
         ],
     )
-    fig.colorbar(mesh, ax=ax, label=r"$|F_\parallel|$ / eV $\mathrm{\AA}^{-1}$")
+    fig.colorbar(mesh, ax=ax, label="|F∥| / eV Å$^{-1}$", pad=0.02)
     ax.axvline(climb, color="white", ls="--", lw=1.2, alpha=0.9, label=f"highest image ({climb})")
     ax.set_xlabel("Image index")
     ax.set_ylabel("NEB optimization step")
     ax.set_title(f"Where the band still moves ({SYSTEM_LABELS.get(blog_system, blog_system)})")
-    # Integer ticks only
+    # Integer ticks only. No grid: it draws through the cells.
     step = max(1, len(images) // 10)
     ax.set_xticks(images[::step])
     ystep = max(1, len(iterations) // 10)
     ax.set_yticks(iterations[::ystep])
-    ax.legend(loc="upper left", fontsize=9)
+    ax.grid(False)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.18),
+        borderaxespad=0.0,
+        fontsize=9,
+        frameon=True,
+    )
     save(fig, output)
 
 
 def plot_sampling_density(neb_root: Path, output: Path) -> None:
-    fig, ax = plt.subplots(figsize=(7.2, 4.2))
-    colors = [COLORS["teal"], COLORS["gold"], COLORS["plum"]]
+    fig, ax = plt.subplots(figsize=(7.2, 4.4))
+    xmax = 0
     for idx, system in enumerate(SYSTEM_LABELS):
         grouped = load_iterations(neb_root / system)
         final_rows = grouped[max(grouped)]
         rxn = np.asarray([float(row["rxn_coord"]) for row in final_rows])
         spacing = np.diff(rxn)
+        spacing = spacing[np.isfinite(spacing) & (spacing > 0)]
+        x = np.arange(len(spacing))
+        xmax = max(xmax, int(x[-1]) if len(x) else 0)
         ax.plot(
-            np.arange(len(spacing)),
+            x,
             spacing,
             marker="o",
             lw=1.8,
             ms=4.2,
-            color=colors[idx],
+            color=SERIES_COLORS[idx % len(SERIES_COLORS)],
             label=SYSTEM_LABELS[system],
         )
+    # The Grignard reactant segment is several angstroms. A linear axis
+    # flattens the cycloaddition and bicyclobutane spacings under that spike.
+    ax.set_yscale("log")
     ax.set_xlabel("Segment index")
-    ax.set_ylabel(r"Path-length spacing / $\mathrm{\AA}$")
+    ax.set_ylabel("Path-length spacing / Å")
     ax.set_title("Final-band image spacing")
-    ax.legend(loc="best")
+    ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=9, integer=True, min_n_ticks=4))
+    ax.xaxis.set_major_formatter(mpl.ticker.FormatStrFormatter("%d"))
+    ax.set_xlim(-0.5, xmax + 0.5)
+    # The Grignard spike sits in the upper-left corner, so the legend stays outside.
+    ax.legend(
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
+        borderaxespad=0.0,
+        fontsize=9,
+        frameon=True,
+    )
     save(fig, output)
 
 

@@ -40,6 +40,8 @@ plotting:
   rotation: "15x,55y,0z"
   perspective_tilt: 8
   strip_renderer: xyzrender
+  # Same ball-and-stick preset on every landscape strip (paton, not bubble).
+  xyzrender_config: paton
   cmap_landscape: ruhi_diverging
   theme: ruhi
   plot_structures: crit_points
